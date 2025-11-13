@@ -5,56 +5,56 @@ from core.config import Config
 
 
 class TodoManager:
-    """مدیریت پروژه‌ها و تسک‌ها"""
+    """Manage projects and tasks"""
     
     def __init__(self, config=None):
         self.config = config if config else Config()
         self.projects = []
-        self.all_tasks = []  # لیست مرکزی تمام تسک‌ها
+        self.all_tasks = []  # Central list of all tasks
     
     # ==================== Project Management ====================
     
     def create_project(self, name, description):
-        """ساخت پروژه جدید"""
-        # بررسی محدودیت تعداد
+        """Create a new project"""
+        # Check project count limit
         if len(self.projects) >= self.config.MAX_PROJECTS:
             raise ValueError(f"Cannot create more than {self.config.MAX_PROJECTS} projects")
         
-        # بررسی محدودیت طول نام
+        # Check name length limit
         if len(name) > self.config.MAX_PROJECT_NAME_LENGTH:
             raise ValueError(f"Project name cannot exceed {self.config.MAX_PROJECT_NAME_LENGTH} characters")
         
-        # بررسی محدودیت طول توضیحات
+        # Check description length limit
         if len(description) > self.config.MAX_PROJECT_DESC_LENGTH:
             raise ValueError(f"Project description cannot exceed {self.config.MAX_PROJECT_DESC_LENGTH} characters")
         
-        # بررسی تکراری نبودن نام
+        # Check for duplicate name
         if any(p.name == name for p in self.projects):
             raise ValueError(f"Project with name '{name}' already exists")
         
-        # ساخت پروژه
+        # Create project
         project = Project(name=name, description=description)
         self.projects.append(project)
         return project
     
     def get_project(self, project_id):
-        """دریافت پروژه بر اساس ID"""
+        """Get project by ID"""
         for project in self.projects:
             if project.id == project_id:
                 return project
         return None
     
     def list_projects(self):
-        """لیست تمام پروژه‌ها"""
+        """List all projects"""
         return self.projects
     
     def edit_project(self, project_id, name=None, description=None):
-        """ویرایش پروژه"""
+        """Edit project"""
         project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID '{project_id}' not found")
         
-        # بررسی محدودیت‌ها
+        # Check constraints
         if name:
             if len(name) > self.config.MAX_PROJECT_NAME_LENGTH:
                 raise ValueError(f"Project name cannot exceed {self.config.MAX_PROJECT_NAME_LENGTH} characters")
@@ -68,43 +68,43 @@ class TodoManager:
         return project
     
     def delete_project(self, project_id):
-        """حذف پروژه (Cascade Delete)"""
+        """Delete project (Cascade Delete)"""
         project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID '{project_id}' not found")
         
-        # حذف تمام تسک‌های پروژه از لیست مرکزی
+        # Delete all tasks of the project from the central list
         task_ids = [task.id for task in project.tasks]
         self.all_tasks = [t for t in self.all_tasks if t.id not in task_ids]
         
-        # حذف پروژه
+        # Delete project
         self.projects.remove(project)
         return True
     
     # ==================== Task Management ====================
     
     def create_task(self, project_id, title, description, status='todo', deadline=None):
-        """ساخت تسک جدید"""
+        """Create a new task"""
         project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID '{project_id}' not found")
         
-        # بررسی محدودیت تعداد تسک‌ها
+        # Check task count limit
         if len(project.tasks) >= self.config.MAX_TASKS_PER_PROJECT:
             raise ValueError(f"Cannot create more than {self.config.MAX_TASKS_PER_PROJECT} tasks per project")
         
-        # بررسی محدودیت طول
+        # Check length limit
         if len(title) > self.config.MAX_TASK_NAME_LENGTH:
             raise ValueError(f"Task title cannot exceed {self.config.MAX_TASK_NAME_LENGTH} characters")
         
         if len(description) > self.config.MAX_TASK_DESC_LENGTH:
             raise ValueError(f"Task description cannot exceed {self.config.MAX_TASK_DESC_LENGTH} characters")
         
-        # بررسی وضعیت معتبر
+        # Check valid status
         if status not in ['todo', 'in_progress', 'done']:
             raise ValueError("Status must be one of: todo, in_progress, done")
         
-        # ساخت تسک
+        # Create task
         task = Task(
             title=title,
             description=description,
@@ -113,21 +113,21 @@ class TodoManager:
             project_id=project_id
         )
         
-        # افزودن به پروژه و لیست مرکزی
+        # Add to project and central list
         project.add_task(task)
         self.all_tasks.append(task)
         
         return task
     
     def get_task(self, task_id):
-        """دریافت تسک بر اساس ID"""
+        """Get task by ID"""
         for task in self.all_tasks:
             if task.id == task_id:
                 return task
         return None
     
     def list_tasks(self, project_id=None):
-        """لیست تسک‌ها (همه یا فقط یک پروژه)"""
+        """List tasks (all or just one project)"""
         if project_id:
             project = self.get_project(project_id)
             if not project:
@@ -136,12 +136,12 @@ class TodoManager:
         return self.all_tasks
     
     def edit_task(self, task_id, title=None, description=None, status=None, deadline=None):
-        """ویرایش تسک"""
+        """Edit task"""
         task = self.get_task(task_id)
         if not task:
             raise ValueError(f"Task with ID '{task_id}' not found")
         
-        # بررسی محدودیت‌ها
+        # Check constraints
         if title and len(title) > self.config.MAX_TASK_NAME_LENGTH:
             raise ValueError(f"Task title cannot exceed {self.config.MAX_TASK_NAME_LENGTH} characters")
         
@@ -155,16 +155,16 @@ class TodoManager:
         return task
     
     def delete_task(self, task_id):
-        """حذف تسک"""
+        """Delete task"""
         task = self.get_task(task_id)
         if not task:
             raise ValueError(f"Task with ID '{task_id}' not found")
         
-        # حذف از پروژه
+        # Delete from project
         project = self.get_project(task.project_id)
         if project:
             project.remove_task(task_id)
         
-        # حذف از لیست مرکزی
+        # Delete from central list
         self.all_tasks.remove(task)
         return True

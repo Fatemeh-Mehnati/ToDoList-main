@@ -11,17 +11,17 @@ class Task:
         self.completed = completed
         self.deadline = deadline
 
-    """نماینده‌ی یک تسک در ToDoList"""
+    """Represents a task in the ToDoList."""
     
     VALID_STATUSES = ["todo", "in_progress", "done"]
     
     def __init__(self, title: str, description: str = "", status: str = "todo"):
         if len(title) > 50:
-            raise ValueError("عنوان تسک نمی‌تواند بیش از ۵۰ کاراکتر باشد")
+            raise ValueError("Task title cannot exceed 50 characters.")
         if len(description) > 200:
-            raise ValueError("توضیحات تسک نمی‌تواند بیش از ۲۰۰ کاراکتر باشد")
+            raise ValueError("Task description cannot exceed 200 characters.")
         if status not in self.VALID_STATUSES:
-            raise ValueError(f"وضعیت باید یکی از {self.VALID_STATUSES} باشد")
+            raise ValueError(f"Status must be one of {self.VALID_STATUSES}")
         
         self.id: str = str(uuid.uuid4())
         self.title: str = title
@@ -31,21 +31,21 @@ class Task:
         self.project_id: Optional[str] = None
     
     def update_status(self, new_status: str) -> None:
-        """تغییر وضعیت تسک"""
+        """Change task status"""
         if new_status not in self.VALID_STATUSES:
-            raise ValueError(f"وضعیت باید یکی از {self.VALID_STATUSES} باشد")
+            raise ValueError(f"Status must be one of {self.VALID_STATUSES}")
         self.status = new_status
     
     def update_title(self, new_title: str) -> None:
-        """تغییر عنوان تسک"""
+        """Change task title"""
         if len(new_title) > 50:
-            raise ValueError("عنوان تسک نمی‌تواند بیش از ۵۰ کاراکتر باشد")
+            raise ValueError("Task title cannot exceed 50 characters.")
         self.title = new_title
     
     def update_description(self, new_description: str) -> None:
-        """تغییر توضیحات تسک"""
+        """Change task description"""
         if len(new_description) > 200:
-            raise ValueError("توضیحات تسک نمی‌تواند بیش از ۲۰۰ کاراکتر باشد")
+            raise ValueError("Task description cannot exceed 200 characters.")
         self.description = new_description
     
     def __repr__(self) -> str:
