@@ -1,20 +1,22 @@
+# ...existing code...
 # main.py
 from core.todo_manager import TodoManager
 from cli.menu import Menu
+from typing import Any
 
 
-def main():
+def main() -> None:
     """Main program function"""
     try:
         # Create task manager
-        manager = TodoManager()
-        
+        manager: TodoManager = TodoManager()
+
         # Create menu
-        menu = Menu(manager)
-        
+        menu: Menu = Menu(manager)
+
         # Show main menu
         menu.show_main_menu()
-        
+
     except KeyboardInterrupt:
         print("\n\n👋 Program closed successfully!")
     except Exception as e:
@@ -23,3 +25,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# ...existing code...
