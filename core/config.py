@@ -7,6 +7,7 @@ from typing import Any
 class Config:
     """Configuration class for ToDoList application."""
 
+    DATABASE_URL: str
     MAX_PROJECTS: int
     MAX_PROJECT_NAME_LENGTH: int
     MAX_PROJECT_DESC_LENGTH: int
@@ -15,6 +16,12 @@ class Config:
     MAX_TASK_DESC_LENGTH: int
 
     def __init__(self) -> None:
+        # Database configuration (PostgreSQL)
+        self.DATABASE_URL = os.environ.get(
+            "DATABASE_URL",
+            "postgresql://todo_user:todo_password@localhost:5432/todo_db"
+        )
+        
         # Project limits (with default values)
         self.MAX_PROJECTS = int(os.environ.get("MAX_PROJECTS", "10"))
         self.MAX_PROJECT_NAME_LENGTH = int(
@@ -40,4 +47,7 @@ class Config:
             f"Config(MAX_PROJECTS={self.MAX_PROJECTS}, "
             f"MAX_TASKS_PER_PROJECT={self.MAX_TASKS_PER_PROJECT})"
         )
-# ...existing code...
+
+
+# Instantiate settings at module level
+settings = Config()
