@@ -1,7 +1,8 @@
-# core/todo_manager.py
+# core/services/todo_manager.py (or core/todo_manager.py)
 
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import datetime
 
 from core.models.project import Project
 from core.models.task import Task
@@ -11,7 +12,7 @@ from core.repositories.task_repository import TaskRepository
 
 
 class TodoManager:
-    """Manage projects and tasks with SQLAlchemy"""
+    """Manage projects and tasks using repositories and SQLAlchemy."""
 
     def __init__(self, db: Session, config: Optional[Config] = None) -> None:
         self.db = db
@@ -21,41 +22,48 @@ class TodoManager:
         self.projects = ProjectRepository(db)
         self.tasks = TaskRepository(db)
 
-
     # ==================== Project Management ====================
 
     def create_project(self, name: str, description: str) -> Project:
-        """Create a new project"""
+        """Create a new project with validation."""
 
         # Check project count limit
-        project_count = self.db.query(Project).count()
+        project_count = self.projects.count()
         if project_count >= self.config.MAX_PROJECTS:
-            raise ValueError(f"Cannot create more than {self.config.MAX_PROJECTS} projects")
+            raise ValueError(
+                f"Cannot create more than {self.config.MAX_PROJECTS} projects"
+            )
 
         # Check name + description length
         if len(name) > self.config.MAX_PROJECT_NAME_LENGTH:
-            raise ValueError(f"Project name cannot exceed {self.config.MAX_PROJECT_NAME_LENGTH} characters")
+            raise ValueError(
+                f"Project name cannot exceed {self.config.MAX_PROJECT_NAME_LENGTH} characters"
+            )
 
         if len(description) > self.config.MAX_PROJECT_DESC_LENGTH:
-            raise ValueError(f"Project description cannot exceed {self.config.MAX_PROJECT_DESC_LENGTH} characters")
+            raise ValueError(
+                f"Project description cannot exceed {self.config.MAX_PROJECT_DESC_LENGTH} characters"
+            )
 
         # Duplicate name check
-        if self.db.query(Project).filter(Project.name == name).first():
+        if self.projects.get_by_name(name):
             raise ValueError(f"Project with name '{name}' already exists")
 
-        project = Project(name=name, description=description)
-        self.db.add(project)
-        self.db.commit()
-        self.db.refresh(project)
-        return project
+        # Delegate creation to repository
+        return self.projects.create(name=name, description=description)
 
     def get_project(self, project_id: str) -> Optional[Project]:
-        return self.db.query(Project).filter(Project.id == project_id).first()
+        return self.projects.get(project_id)
 
     def list_projects(self) -> List[Project]:
-        return self.db.query(Project).all()
+        return self.projects.list()
 
-    def edit_project(self, project_id: str, name: Optional[str] = None, description: Optional[str] = None) -> Project:
+    def edit_project(
+        self,
+        project_id: str,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> Project:
         project = self.get_project(project_id)
         if not project:
             raise ValueError(f"Project with ID '{project_id}' not found")
@@ -63,18 +71,22 @@ class TodoManager:
         # Validate fields
         if name:
             if len(name) > self.config.MAX_PROJECT_NAME_LENGTH:
-                raise ValueError(f"Project name too long")
-            if (
+                raise ValueError("Project name too long")
+
+            # Check for duplicate name (excluding this project)
+            existing = (
                 self.db.query(Project)
                 .filter(Project.name == name, Project.id != project_id)
                 .first()
-            ):
+            )
+            if existing:
                 raise ValueError(f"Project with name '{name}' already exists")
+
             project.name = name
 
         if description:
             if len(description) > self.config.MAX_PROJECT_DESC_LENGTH:
-                raise ValueError(f"Description too long")
+                raise ValueError("Description too long")
             project.description = description
 
         self.db.commit()
@@ -84,10 +96,10 @@ class TodoManager:
     def delete_project(self, project_id: str) -> bool:
         project = self.get_project(project_id)
         if not project:
-            raise ValueError(f"Project not found")
+            raise ValueError("Project not found")
 
-        self.db.delete(project)  # Cascade deletes tasks automatically
-        self.db.commit()
+        # Cascade deletes tasks automatically (as defined in model relationship)
+        self.projects.delete(project)
         return True
 
     # ==================== Task Management ====================
@@ -98,15 +110,16 @@ class TodoManager:
         title: str,
         description: str,
         status: str = "todo",
-        deadline=None,
+        deadline: Optional[datetime] = None,
     ) -> Task:
+        """Create a new task under a project with validation."""
 
         project = self.get_project(project_id)
         if not project:
             raise ValueError("Project not found")
 
         # Task count constraint
-        task_count = self.db.query(Task).filter(Task.project_id == project_id).count()
+        task_count = self.tasks.count_by_project(project_id)
         if task_count >= self.config.MAX_TASKS_PER_PROJECT:
             raise ValueError(
                 f"Cannot create more than {self.config.MAX_TASKS_PER_PROJECT} tasks for this project"
@@ -121,7 +134,8 @@ class TodoManager:
         if status not in Task.VALID_STATUSES:
             raise ValueError("Invalid status")
 
-        task = Task(
+        # Delegate creation to repository
+        return self.tasks.create(
             title=title,
             description=description,
             status=status,
@@ -129,18 +143,11 @@ class TodoManager:
             project_id=project_id,
         )
 
-        self.db.add(task)
-        self.db.commit()
-        self.db.refresh(task)
-        return task
-
     def get_task(self, task_id: str) -> Optional[Task]:
-        return self.db.query(Task).filter(Task.id == task_id).first()
+        return self.tasks.get(task_id)
 
     def list_tasks(self, project_id: Optional[str] = None) -> List[Task]:
-        if project_id:
-            return self.db.query(Task).filter(Task.project_id == project_id).all()
-        return self.db.query(Task).all()
+        return self.tasks.list(project_id=project_id)
 
     def edit_task(
         self,
@@ -148,9 +155,8 @@ class TodoManager:
         title: Optional[str] = None,
         description: Optional[str] = None,
         status: Optional[str] = None,
-        deadline=None,
+        deadline: Optional[datetime] = None,
     ) -> Task:
-
         task = self.get_task(task_id)
         if not task:
             raise ValueError("Task not found")
@@ -182,6 +188,5 @@ class TodoManager:
         if not task:
             raise ValueError("Task not found")
 
-        self.db.delete(task)
-        self.db.commit()
+        self.tasks.delete(task)
         return True
