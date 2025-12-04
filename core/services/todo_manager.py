@@ -1,14 +1,22 @@
-# core/services/todo_manager.py (or core/todo_manager.py)
+# core/services/todo_manager.py
+
+from datetime import datetime
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from datetime import datetime
 
 from core.models.project import Project
 from core.models.task import Task
 from core.config import Config
 from core.repositories.project_repository import ProjectRepository
 from core.repositories.task_repository import TaskRepository
+from core.services.validators import (
+    validate_project_name,
+    validate_project_description,
+    validate_task_title,
+    validate_task_description,
+    validate_task_status,
+)
 
 
 class TodoManager:
@@ -34,16 +42,9 @@ class TodoManager:
                 f"Cannot create more than {self.config.MAX_PROJECTS} projects"
             )
 
-        # Check name + description length
-        if len(name) > self.config.MAX_PROJECT_NAME_LENGTH:
-            raise ValueError(
-                f"Project name cannot exceed {self.config.MAX_PROJECT_NAME_LENGTH} characters"
-            )
-
-        if len(description) > self.config.MAX_PROJECT_DESC_LENGTH:
-            raise ValueError(
-                f"Project description cannot exceed {self.config.MAX_PROJECT_DESC_LENGTH} characters"
-            )
+        # Field-level validation
+        validate_project_name(name, self.config)
+        validate_project_description(description, self.config)
 
         # Duplicate name check
         if self.projects.get_by_name(name):
@@ -68,10 +69,9 @@ class TodoManager:
         if not project:
             raise ValueError(f"Project with ID '{project_id}' not found")
 
-        # Validate fields
-        if name:
-            if len(name) > self.config.MAX_PROJECT_NAME_LENGTH:
-                raise ValueError("Project name too long")
+        if name is not None:
+            # validate name
+            validate_project_name(name, self.config)
 
             # Check for duplicate name (excluding this project)
             existing = (
@@ -84,9 +84,8 @@ class TodoManager:
 
             project.name = name
 
-        if description:
-            if len(description) > self.config.MAX_PROJECT_DESC_LENGTH:
-                raise ValueError("Description too long")
+        if description is not None:
+            validate_project_description(description, self.config)
             project.description = description
 
         self.db.commit()
@@ -125,14 +124,10 @@ class TodoManager:
                 f"Cannot create more than {self.config.MAX_TASKS_PER_PROJECT} tasks for this project"
             )
 
-        if len(title) > self.config.MAX_TASK_NAME_LENGTH:
-            raise ValueError("Task title too long")
-
-        if len(description) > self.config.MAX_TASK_DESC_LENGTH:
-            raise ValueError("Task description too long")
-
-        if status not in Task.VALID_STATUSES:
-            raise ValueError("Invalid status")
+        # Field-level validation
+        validate_task_title(title, self.config)
+        validate_task_description(description, self.config)
+        validate_task_status(status)
 
         # Delegate creation to repository
         return self.tasks.create(
@@ -161,22 +156,19 @@ class TodoManager:
         if not task:
             raise ValueError("Task not found")
 
-        if title:
-            if len(title) > self.config.MAX_TASK_NAME_LENGTH:
-                raise ValueError("Title too long")
+        if title is not None:
+            validate_task_title(title, self.config)
             task.title = title
 
-        if description:
-            if len(description) > self.config.MAX_TASK_DESC_LENGTH:
-                raise ValueError("Description too long")
+        if description is not None:
+            validate_task_description(description, self.config)
             task.description = description
 
-        if status:
-            if status not in Task.VALID_STATUSES:
-                raise ValueError("Invalid status")
+        if status is not None:
+            validate_task_status(status)
             task.status = status
 
-        if deadline:
+        if deadline is not None:
             task.deadline = deadline
 
         self.db.commit()
