@@ -190,3 +190,26 @@ class TodoManager:
 
         self.tasks.delete(task)
         return True
+
+    def close_overdue_tasks(self) -> int:
+        """
+        Close all tasks whose deadline has passed and are not done yet.
+        Returns the number of tasks that were updated.
+        """
+        now = datetime.utcnow()
+
+        overdue_tasks = (
+            self.db.query(Task)
+            .filter(
+                Task.deadline.isnot(None),
+                Task.deadline < now,
+                Task.status != "done",
+            )
+            .all()
+        )
+
+        for task in overdue_tasks:
+            task.status = "done"
+
+        self.db.commit()
+        return len(overdue_tasks)
