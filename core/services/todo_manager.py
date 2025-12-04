@@ -2,9 +2,12 @@
 
 from sqlalchemy.orm import Session
 from typing import List, Optional
+
 from core.models.project import Project
 from core.models.task import Task
 from core.config import Config
+from core.repositories.project_repository import ProjectRepository
+from core.repositories.task_repository import TaskRepository
 
 
 class TodoManager:
@@ -13,6 +16,11 @@ class TodoManager:
     def __init__(self, db: Session, config: Optional[Config] = None) -> None:
         self.db = db
         self.config = config if config else Config()
+
+        # Repositories
+        self.projects = ProjectRepository(db)
+        self.tasks = TaskRepository(db)
+
 
     # ==================== Project Management ====================
 
