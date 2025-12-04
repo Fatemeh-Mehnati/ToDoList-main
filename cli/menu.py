@@ -1,7 +1,7 @@
 # ...existing code...
 # cli/menu.py
 from typing import Any
-from core.todo_manager import TodoManager
+from core.services.todo_manager import TodoManager
 from cli import project_cli, task_cli
 
 

@@ -1,7 +1,7 @@
 # ...existing code...
 # cli/task_cli.py
 from typing import Optional
-from core.todo_manager import TodoManager
+from core.services.todo_manager import TodoManager
 from datetime import datetime
 
 
