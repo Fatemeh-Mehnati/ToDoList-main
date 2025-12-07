@@ -1,1 +1,61 @@
-Generic single-database configuration.
+# ToDoList – CLI + REST API (FastAPI + PostgreSQL)
+
+این پروژه یک سیستم مدیریت تسک (ToDoList) است که در چند فاز توسعه داده شده:
+
+- **فاز ۱**: پیاده‌سازی منطق برنامه با OOP و In-Memory Storage  
+- **فاز ۲**: اضافه شدن پایگاه داده PostgreSQL + SQLAlchemy، Repository Pattern، Alembic و لایه‌ی Service  
+- **فاز ۳**: تبدیل سیستم به یک Web API کامل با FastAPI (RESTful API + Auto Docs)
+
+---
+
+## تکنولوژی‌ها
+
+- Python 3.13
+- FastAPI
+- SQLAlchemy
+- PostgreSQL
+- Alembic (Database Migrations)
+- Poetry (مدیریت پکیج‌ها)
+- Docker (برای دیتابیس – در صورت نیاز)
+
+---
+
+## ساختار کلی پروژه
+
+```text
+core/
+  config.py
+  database.py
+  models/
+    project.py
+    task.py
+  repositories/
+    project_repository.py
+    task_repository.py
+  services/
+    todo_manager.py
+    validators.py
+cli/
+  ...                # منوی خط فرمان (فازهای قبلی)
+
+app/
+  __init__.py
+  main.py            # FastAPI app (Web API)
+  api/
+    __init__.py
+    routers.py
+    dependencies.py
+    controllers/
+      project_controller.py
+      task_controller.py
+    controller_schemas/
+      project_request_schema.py
+      project_response_schema.py
+      task_request_schema.py
+      task_response_schema.py
+
+alembic/
+  ...
+alembic.ini
+pyproject.toml
+README.md

@@ -13,8 +13,8 @@ class TaskBaseResponse(BaseModel):
     created_at: datetime
     deadline: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+    # Pydantic v2 config – جایگزین orm_mode
+    model_config = {"from_attributes": True}
 
 
 class TaskListItemResponse(TaskBaseResponse):

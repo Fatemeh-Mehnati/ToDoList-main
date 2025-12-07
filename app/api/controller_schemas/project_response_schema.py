@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -10,8 +10,8 @@ class ProjectBaseResponse(BaseModel):
     description: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    # Pydantic v2 config – جایگزین orm_mode
+    model_config = {"from_attributes": True}
 
 
 class ProjectListItemResponse(ProjectBaseResponse):
@@ -20,6 +20,5 @@ class ProjectListItemResponse(ProjectBaseResponse):
 
 
 class ProjectDetailResponse(ProjectBaseResponse):
-    """Detailed project response (later می‌تونیم لیست تسک‌ها رو هم بهش اضافه کنیم)."""
-    # later: tasks: List["TaskListItemResponse"] = []
+    """Detailed project response."""
     pass

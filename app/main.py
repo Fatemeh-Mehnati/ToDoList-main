@@ -12,7 +12,7 @@ def create_app() -> FastAPI:
     )
 
     # ثبت تمام routerها
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api/v1")
 
     @app.get("/", tags=["Health"])
     def health_check():
