@@ -38,7 +38,7 @@ def create_project(
         )
         return project
     except ValueError as e:
-        # تبدیل خطاهای بیزینسی به HTTP 400
+        #Converting business errors to HTTP 400
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
@@ -120,5 +120,5 @@ def delete_project(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
-    # 204 یعنی بدون body
+    # 204 means no body
     return None
